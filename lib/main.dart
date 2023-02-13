@@ -1,111 +1,113 @@
 import 'package:flutter/material.dart';
-import 'package:traning_app/cubit/counter_cubit.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MaterialApp(
+    title: 'Project App',
+    theme: ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
+    ),
+    home: MyHomePage(),
+    routes: {
+      '/new-contact': (context) => const NewContactView(),
+    },
+  ));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class Contact {
+  final String name;
+  Contact({
+    required this.name,
+  });
+}
 
+class ContactBook {
+  ContactBook._sharedInstance();
+  static final ContactBook _shared = ContactBook._sharedInstance();
+  factory ContactBook() => _shared;
+  final List<Contact> _contacts = [];
+  int get length => _contacts.length;
+  void add({required Contact contact}) {
+    _contacts.add(contact);
+  }
+
+  void remove({required Contact contact}) {
+    _contacts.remove(contact);
+  }
+
+  Contact? contact({required int atIndex}) =>
+      _contacts.length > atIndex ? _contacts[atIndex] : null;
+}
+
+class MyHomePage extends StatelessWidget {
+  MyHomePage({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => CounterCubit(),
-      child: MaterialApp(
-        title: 'Flutter Demo',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        home: const MyHomePage(title: 'Flutter Demo Home Page'),
+    final contactBook = ContactBook();
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.blueAccent,
+        title: Text('Home Page'),
+      ),
+      body: ListView.builder(
+        itemBuilder: (context, index) {
+          final contact = contactBook.contact(atIndex: index);
+          return ListTile(
+            title: Text(contact?.name ?? ''),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          Navigator.of(context).pushNamed('/new-contact');
+        },
+        child: Icon(Icons.add),
       ),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+class NewContactView extends StatefulWidget {
+  const NewContactView({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<NewContactView> createState() => _NewContactViewState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _NewContactViewState extends State<NewContactView> {
+  late final TextEditingController _controller;
+  @override
+  void initState() {
+    _controller = TextEditingController();
+    super.initState();
+  }
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text('Add new contact.'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            BlocConsumer<CounterCubit, CounterState>(
-              listener: (context, state) {
-                if (state.wasIncremented == true) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Incremented!'),
-                      duration: Duration(milliseconds: 500),
-                    ),
-                  );
-                } else if (state.wasIncremented == false) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Decremented!'),
-                      duration: Duration(milliseconds: 500),
-                    ),
-                  );
-                }
-              },
-              builder: (context, state) {
-                return Text(
-                  state.counterValue.toString(),
-                  style: Theme.of(context).textTheme.headline4,
-                );
-              },
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                FloatingActionButton(
-                  heroTag: Text('${widget.title}'),
-                  onPressed: () {
-                    BlocProvider.of<CounterCubit>(context).decrement();
-                    // context.bloc<CounterCubit>().decrement();
-                  },
-                  tooltip: 'Decrement',
-                  child: const Icon(Icons.remove),
-                ),
-                FloatingActionButton(
-                  heroTag: Text('${widget.title} #2'),
-                  onPressed: () {
-                    BlocProvider.of<CounterCubit>(context).increment();
-                    // context.bloc<CounterCubit>().increment();
-                  },
-                  tooltip: 'Increment',
-                  child: const Icon(Icons.add),
-                ),
-              ],
-            ),
-          ],
+      body: Column(children: [
+        TextField(
+          controller: _controller,
+          decoration:
+              InputDecoration(hintText: 'Enter a new contact name here'),
         ),
-      ),
+        TextButton(
+            onPressed: () {
+              final contact = Contact(name: _controller.text);
+              ContactBook().add(contact: contact);
+              Navigator.of(context).pop();
+            },
+            child: Text('Add to contact list'))
+      ]),
     );
   }
 }
