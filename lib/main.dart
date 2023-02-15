@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
+import 'dart:math' as random;
 
 void main() {
   runApp(MaterialApp(
@@ -9,129 +9,74 @@ void main() {
       colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
     ),
     home: MyHomePage(),
-    routes: {
-      '/new-contact': (context) => const NewContactView(),
-    },
   ));
-}
-
-class Contact {
-  final String id;
-  final String name;
-  Contact({
-    required this.name,
-  }) : id = const Uuid().v1();
-}
-
-class ContactBook extends ValueNotifier<List<Contact>> {
-  ContactBook._sharedInstance() : super([]);
-  static final ContactBook _shared = ContactBook._sharedInstance();
-  factory ContactBook() => _shared;
-  int get length => value.length;
-  void add({required Contact contact}) {
-    final contacts = value;
-    contacts.add(contact);
-    notifyListeners();
-  }
-
-  void remove({required Contact contact}) {
-    final contacts = value;
-    if (contacts.contains(contact)) {
-      value.remove(contact);
-      notifyListeners();
-    }
-  }
-
-  Contact? contact({required int atIndex}) =>
-      value.length > atIndex ? value[atIndex] : null;
 }
 
 class MyHomePage extends StatelessWidget {
   MyHomePage({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    final contactBook = ContactBook();
+    InheritedModel;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blueAccent,
-        title: const Text('Home Page'),
+        title: Text('Home Page'),
       ),
-      body: ValueListenableBuilder(
-        valueListenable: ContactBook(),
-        builder: (contact, value, child) {
-          final contacts = value as List<Contact>;
-          return ListView.builder(
-            itemCount: contacts.length,
-            itemBuilder: (context, index) {
-              final contact = contacts[index];
-              return Dismissible(
-                onDismissed: (direction) {
-                  ContactBook().remove(contact: contact);
-                },
-                key: ValueKey(contact.id),
-                child: Material(
-                  elevation: 0.6,
-                  color: Colors.white,
-                  child: ListTile(
-                    title: Text(contact.name),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          Navigator.of(context).pushNamed('/new-contact');
-        },
-        child: Icon(Icons.add),
+      body: Column(
+        children: [
+          Text('A home page'),
+        ],
       ),
     );
   }
 }
 
-class NewContactView extends StatefulWidget {
-  const NewContactView({super.key});
+class AvailableColorsWidget extends InheritedModel<AvailableColors> {
+  final AvailableColors color1;
+  final AvailableColors color2;
+
+  const AvailableColorsWidget({
+    Key? key,
+    required this.color1,
+    required this.color2,
+    required Widget child,
+  }) : super(key: key, child: child);
+
+  static AvailableColors of(BuildContext context, AvailableColors aspect) {
+    return InheritedModel.inheritFrom<AvailableColors>(context,
+        aspect: aspect)!;
+  }
 
   @override
-  State<NewContactView> createState() => _NewContactViewState();
+  bool updateShouldNotify(covariant InheritedWidget oldWidget) {
+    // TODO: implement updateShouldNotify
+    throw UnimplementedError();
+  }
+
+  @override
+  bool updateShouldNotifyDependent(
+      covariant InheritedModel<AvailableColors> oldWidget,
+      Set<AvailableColors> dependencies) {
+    // TODO: implement updateShouldNotifyDependent
+    throw UnimplementedError();
+  }
 }
 
-class _NewContactViewState extends State<NewContactView> {
-  late final TextEditingController _controller;
-  @override
-  void initState() {
-    _controller = TextEditingController();
-    super.initState();
-  }
+final colors = [
+  Colors.blue,
+  Colors.red,
+  Colors.yellow,
+  Colors.orange,
+  Colors.purple,
+  Colors.cyan,
+  Colors.brown,
+  Colors.amber,
+  Colors.grey,
+];
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+enum AvailableColors { one, two }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Add new contact.'),
-      ),
-      body: Column(children: [
-        TextField(
-          controller: _controller,
-          decoration:
-              InputDecoration(hintText: 'Enter a new contact name here'),
-        ),
-        TextButton(
-            onPressed: () {
-              final contact = Contact(name: _controller.text);
-              ContactBook().add(contact: contact);
-              Navigator.of(context).pop();
-            },
-            child: Text('Add to contact list'))
-      ]),
-    );
-  }
+final color = colors.getRandomElement();
+
+extension RandomElement<T> on Iterable<T> {
+  T getRandomElement() => elementAt(random.Random().nextInt(length));
 }
